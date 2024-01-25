@@ -72,6 +72,11 @@ class FromageWEB:
         data = cursor.fetchall()
         for row in data:
             print(row)
+    
+    def close_connection(self):
+        """..."""
+        if self.conn:
+            self.conn.close()
 
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()
