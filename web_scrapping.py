@@ -1,10 +1,8 @@
 """..."""
-from urllib.request import urlopen # pylint: disable=unused-import
-from datetime import datetime # pylint: disable=unused-import
-import sqlite3 # pylint: disable=unused-import
-import pytest # pylint: disable=unused-import
-from bs4 import BeautifulSoup # pylint: disable=unused-import
-import pandas as pd # pylint: disable=unused-import
+from urllib.request import urlopen
+from datetime import datetime
+import sqlite3
+from bs4 import BeautifulSoup
 
 class FromageWEB:
     """..."""
@@ -23,7 +21,8 @@ class FromageWEB:
                 id INTEGER PRIMARY KEY,
                 fromage TEXT,
                 famille TEXT,
-                pate TEXT
+                pate TEXT,
+                date TEXT
             )
         '''
         )
@@ -34,7 +33,7 @@ class FromageWEB:
             'https://www.laboitedufromager.com/liste-des-fromages-par-ordre-alphabetique/'
             )
         data = data.read()
-        soup = BeautifulSoup(data)
+        soup = BeautifulSoup(data, features="html.parser")
         trs = soup.find_all('tr')
 
         for tr in trs:
@@ -50,7 +49,8 @@ class FromageWEB:
                     fromage = td_list[0].text.strip()
                     famille = td_list[1].text.strip()
                     pate = td_list[2].text.strip()
-                    data_to_insert = (fromage, famille, pate)
+                    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    data_to_insert = (fromage, famille, pate, date)
                     self.insert_into_data(data_to_insert)
 
     def insert_into_data(self, data):
@@ -58,8 +58,8 @@ class FromageWEB:
         cursor = self.conn.cursor()
         cursor.execute(
             '''
-                INSERT INTO table_fromage (fromage, famille, pate)
-                VALUES (?, ?, ?)
+                INSERT INTO table_fromage (fromage, famille, pate, date)
+                VALUES (?, ?, ?, ?)
             ''',
             data
         )
@@ -72,7 +72,20 @@ class FromageWEB:
         data = cursor.fetchall()
         for row in data:
             print(row)
-    
+
+    def remove_duplicates(self):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            DELETE FROM table_fromage 
+            WHERE id NOT IN (
+                SELECT MIN(id) 
+                FROM table_fromage 
+                GROUP BY fromage
+            )
+        ''')
+        self.conn.commit()
+
     def close_connection(self):
         """..."""
         if self.conn:
@@ -81,3 +94,4 @@ class FromageWEB:
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()
 fromage_web.display_data()
+fromage_web.remove_duplicates()

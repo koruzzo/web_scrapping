@@ -1,11 +1,8 @@
 """..."""
 import os
-from urllib.request import urlopen # pylint: disable=unused-import
-from datetime import datetime # pylint: disable=unused-import
-import sqlite3 # pylint: disable=unused-import
-import pytest # pylint: disable=unused-import
-from bs4 import BeautifulSoup # pylint: disable=unused-import
-import pandas as pd # pylint: disable=unused-import
+from datetime import datetime
+import sqlite3
+import pytest
 from web_scrapping import FromageWEB
 
 @pytest.fixture
@@ -35,12 +32,13 @@ def test_columns_in_table_fromage(fromage_instance):
     assert 'fromage' in column_names
     assert 'famille' in column_names
     assert 'pate' in column_names
+    assert 'date' in column_names
     conn.close()
     fromage_instance.close_connection()
 
 def test_insert_into_data(fromage_instance):
     """Cette fonction test l'insertion dans la BDD de nouvelles valeurs"""
-    data_to_insert = ('Test Fromage', 'Test Famille', 'Test Pate')
+    data_to_insert = ('Test Fromage', 'Test Famille', 'Test Pate', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     fromage_instance.insert_into_data(data_to_insert)
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
@@ -63,7 +61,7 @@ def test_no_empty_line(fromage_instance):
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
     cursor.execute(
-        'SELECT * FROM table_fromage WHERE fromage IS NULL OR famille IS NULL OR pate IS NULL'
+        'SELECT * FROM table_fromage WHERE fromage IS NULL OR famille IS NULL OR pate IS NULL OR date IS NULL'
         )
     data = cursor.fetchall()
     conn.close()
@@ -72,13 +70,35 @@ def test_no_empty_line(fromage_instance):
 
 def test_display_data(fromage_instance, capsys):
     """Cette fonction test l'affichage du programme"""
-    data_to_insert = ('Fromage7', 'Famille7', 'Pate7')
+    data_to_insert = ('Fromage7', 'Famille7', 'Pate7', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     fromage_instance.insert_into_data(data_to_insert)
     fromage_instance.display_data()
     captured_output, _ = capsys.readouterr()
     assert 'Fromage7' in captured_output
     assert 'Famille7' in captured_output
     assert 'Pate7' in captured_output
+    fromage_instance.close_connection()
+
+def test_remove_duplicates(fromage_instance):
+    """Cette fonction teste la suppression des doublons."""
+    date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data_to_insert_1 = ('Fromage1', 'Famille1', 'Pate1', date_now)
+    data_to_insert_2 = ('Fromage1', 'Famille1', 'Pate1', date_now)
+    fromage_instance.insert_into_data(data_to_insert_1)
+    fromage_instance.insert_into_data(data_to_insert_2)
+    conn = sqlite3.connect('test_fromage.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM table_fromage WHERE fromage = ?', ('Fromage1',))
+    count_before = cursor.fetchone()[0]
+    conn.close()
+    assert count_before == 2
+    fromage_instance.remove_duplicates()
+    conn = sqlite3.connect('test_fromage.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT COUNT(*) FROM table_fromage WHERE fromage = ?', ('Fromage1',))
+    count_after = cursor.fetchone()[0]
+    conn.close()
+    assert count_after == 1
     fromage_instance.close_connection()
 
 def teardown_module(module):
