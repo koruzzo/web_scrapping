@@ -3,6 +3,12 @@ import os
 from datetime import datetime
 import sqlite3
 import pytest
+from queries import (
+    SELECT_ALL_FROMAGE,
+    SELECT_DISTINCT_FROMAGE_COUNT,
+    SELECT_NULL_ROWS,
+    COUNT_FROMAGE_BY_NAME
+)
 from web_scrapping import FromageWEB
 
 # pylint: disable=redefined-outer-name
@@ -45,21 +51,20 @@ def test_insert_into_data(fromage_instance):
     fromage_instance.insert_into_data(data_to_insert)
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM table_fromage WHERE fromage = ?', ('Test Fromage',))
+    cursor.execute(SELECT_ALL_FROMAGE)
     inserted_data = cursor.fetchone()
     conn.close()
     assert inserted_data is not None
     assert inserted_data[1] == 'Test Fromage'
     assert inserted_data[2] == 'Test Famille'
     assert inserted_data[3] == 'Test Pate'
-
     fromage_instance.close_connection()
 
 def test_no_duplicates_in_fromage_column(fromage_instance):
     """Cette fonction vérifie qu'il n'y ait pas de doublon dans la BDD"""
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(DISTINCT fromage) FROM table_fromage')
+    cursor.execute(SELECT_DISTINCT_FROMAGE_COUNT)
     count_distinct_fromage = cursor.fetchone()[0]
     conn.close()
     fromage_instance.close_connection()
@@ -69,13 +74,7 @@ def test_no_empty_line(fromage_instance):
     """Cette fonction vérifie qu'il n'y ait pas de ligne vide"""
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('''
-        SELECT * FROM table_fromage WHERE 
-            fromage IS NULL OR 
-            famille IS NULL OR 
-            pate IS NULL OR 
-            date IS NULL
-    ''')
+    cursor.execute(SELECT_NULL_ROWS)
     data = cursor.fetchall()
     conn.close()
     fromage_instance.close_connection()
@@ -101,14 +100,14 @@ def test_remove_duplicates(fromage_instance):
     fromage_instance.insert_into_data(data_to_insert_2)
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM table_fromage WHERE fromage = ?', ('Fromage1',))
+    cursor.execute(COUNT_FROMAGE_BY_NAME, ('Fromage1',))
     count_before = cursor.fetchone()[0]
     conn.close()
     assert count_before == 2
     fromage_instance.remove_duplicates()
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT COUNT(*) FROM table_fromage WHERE fromage = ?', ('Fromage1',))
+    cursor.execute(COUNT_FROMAGE_BY_NAME, ('Fromage1',))
     count_after = cursor.fetchone()[0]
     conn.close()
     assert count_after == 1
@@ -127,6 +126,22 @@ def test_display_data_family(fromage_instance, capsys):
     captured_output, _ = capsys.readouterr()
     assert 'Famille1' in captured_output
     assert 'Famille2' in captured_output
+    fromage_instance.close_connection()
+
+def test_update_data(fromage_instance):
+    """Cett fonction test la mise à jour des données"""
+    date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    test_data = ('TestFromage', 'TestFamily', 'TestPate', date_now)
+    fromage_instance.insert_into_data(test_data)
+    cursor = fromage_instance.conn.cursor()
+    cursor.execute(SELECT_ALL_FROMAGE)
+    result = cursor.fetchone()
+    fromage_id = result[0] if result else None
+    new_values = ('UpdatedFromage', 'UpdatedFamily', 'UpdatedPate')
+    fromage_instance.update_data(fromage_id, new_values)
+    cursor.execute(SELECT_ALL_FROMAGE)
+    updated_result = cursor.fetchone()
+    assert updated_result[1:4] == new_values
     fromage_instance.close_connection()
 
 def teardown_module():
