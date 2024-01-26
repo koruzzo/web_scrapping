@@ -65,10 +65,34 @@ class FromageWEB:
         )
         self.conn.commit()
 
+    def update_data(self, fromage_id, new_values):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute(
+            '''
+                UPDATE table_fromage
+                SET fromage=?, famille=?, pate=?
+                WHERE id=?
+            ''',
+            (*new_values, fromage_id))
+        self.conn.commit()
+
     def display_data(self):
         """..."""
         cursor = self.conn.cursor()
         cursor.execute('SELECT * FROM table_fromage')
+        data = cursor.fetchall()
+        for row in data:
+            print(row)
+
+    def display_data_family(self):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute('''
+            SELECT famille, COUNT(fromage) as nombre_fromages 
+                FROM table_fromage 
+                GROUP BY famille
+        ''')
         data = cursor.fetchall()
         for row in data:
             print(row)
@@ -93,5 +117,6 @@ class FromageWEB:
 
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()
-fromage_web.display_data()
 fromage_web.remove_duplicates()
+fromage_web.display_data()
+fromage_web.display_data_family()

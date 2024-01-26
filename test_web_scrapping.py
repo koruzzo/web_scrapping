@@ -5,6 +5,8 @@ import sqlite3
 import pytest
 from web_scrapping import FromageWEB
 
+# pylint: disable=redefined-outer-name
+
 @pytest.fixture
 def fromage_instance():
     """Cette fonction renvoie une instance de la classe FromageWEB"""
@@ -38,12 +40,19 @@ def test_columns_in_table_fromage(fromage_instance):
 
 def test_insert_into_data(fromage_instance):
     """Cette fonction test l'insertion dans la BDD de nouvelles valeurs"""
-    data_to_insert = ('Test Fromage', 'Test Famille', 'Test Pate', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    data_to_insert = ('Test Fromage', 'Test Famille', 'Test Pate',
+                      datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     fromage_instance.insert_into_data(data_to_insert)
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM table_fromage')
+    cursor.execute('SELECT * FROM table_fromage WHERE fromage = ?', ('Test Fromage',))
+    inserted_data = cursor.fetchone()
     conn.close()
+    assert inserted_data is not None
+    assert inserted_data[1] == 'Test Fromage'
+    assert inserted_data[2] == 'Test Famille'
+    assert inserted_data[3] == 'Test Pate'
+
     fromage_instance.close_connection()
 
 def test_no_duplicates_in_fromage_column(fromage_instance):
@@ -60,9 +69,13 @@ def test_no_empty_line(fromage_instance):
     """Cette fonction vérifie qu'il n'y ait pas de ligne vide"""
     conn = sqlite3.connect('test_fromage.db')
     cursor = conn.cursor()
-    cursor.execute(
-        'SELECT * FROM table_fromage WHERE fromage IS NULL OR famille IS NULL OR pate IS NULL OR date IS NULL'
-        )
+    cursor.execute('''
+        SELECT * FROM table_fromage WHERE 
+            fromage IS NULL OR 
+            famille IS NULL OR 
+            pate IS NULL OR 
+            date IS NULL
+    ''')
     data = cursor.fetchall()
     conn.close()
     fromage_instance.close_connection()
@@ -101,7 +114,22 @@ def test_remove_duplicates(fromage_instance):
     assert count_after == 1
     fromage_instance.close_connection()
 
-def teardown_module(module):
+def test_display_data_family(fromage_instance, capsys):
+    """Cette fonction test l'affichage du nombre de fromages par famille"""
+    date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data_to_insert_1 = ('Fromage1', 'Famille1', 'Pate1', date_now)
+    data_to_insert_2 = ('Fromage2', 'Famille1', 'Pate2', date_now)
+    data_to_insert_3 = ('Fromage3', 'Famille2', 'Pate3', date_now)
+    fromage_instance.insert_into_data(data_to_insert_1)
+    fromage_instance.insert_into_data(data_to_insert_2)
+    fromage_instance.insert_into_data(data_to_insert_3)
+    fromage_instance.display_data_family()
+    captured_output, _ = capsys.readouterr()
+    assert 'Famille1' in captured_output
+    assert 'Famille2' in captured_output
+    fromage_instance.close_connection()
+
+def teardown_module():
     """Cette fonction supprime la BDD de test"""
     if os.path.isfile('test_fromage.db'):
         os.remove('test_fromage.db')
