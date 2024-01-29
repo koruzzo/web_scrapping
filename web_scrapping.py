@@ -10,6 +10,7 @@ from queries import (
     SELECT_ALL_FROMAGE,
     SELECT_FAMILY_COUNT,
     DELETE_DUPLICATES,
+    CHECK_IF_EXIST
 )
 from config import FROMAGE_URL
 
@@ -97,6 +98,48 @@ class FromageWEB:
         cursor.execute(SELECT_FAMILY_COUNT)
         data = cursor.fetchall()
         return data
+
+    def update_from_url(self):
+        """
+            Cette fonction récupère les données de l'URL et les met à jour dans la base de données.
+            Elle vérifie si les données sont déjà présentes dans la base avant de les insérer.
+        """
+        data = urlopen(FROMAGE_URL)
+        data = data.read()
+        soup = BeautifulSoup(data, features="html.parser")
+        trs = soup.find_all('tr')
+        updated = False
+        for tr in trs:
+            td_list = tr.find_all('td')
+            if len(td_list) == 3:
+                if (
+                    td_list[0].text.strip() != ""
+                    and "Famille" not in td_list[0].text
+                    and "Fromage" not in td_list[0].text
+                    and "Pâte" not in td_list[0].text
+                    and not td_list[0].find_all('strong')
+                ):
+                    fromage = td_list[0].text.strip()
+                    famille = td_list[1].text.strip()
+                    pate = td_list[2].text.strip()
+                    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    data_to_insert = (fromage, famille, pate, date)
+                    if not self.check_data_exists(fromage):
+                        self.insert_into_data(data_to_insert)
+                        updated = True
+        return updated
+
+    def check_data_exists(self, fromage_name):
+        """
+            Vérifie si les données pour un fromage donné existent déjà dans la base.
+            Retourne True si les données existent, False sinon.
+        """
+        cursor = self.conn.cursor()
+        cursor.execute(CHECK_IF_EXIST, (fromage_name,))
+        count = cursor.fetchone()[0]
+        return count > 0
+
+
 
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()

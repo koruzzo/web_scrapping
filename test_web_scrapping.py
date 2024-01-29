@@ -1,15 +1,18 @@
 """..."""
 import os
 from datetime import datetime
+from unittest.mock import patch, MagicMock
 import sqlite3
 import pytest
 from queries import (
     SELECT_ALL_FROMAGE,
     SELECT_DISTINCT_FROMAGE_COUNT,
     SELECT_NULL_ROWS,
-    COUNT_FROMAGE_BY_NAME
+    COUNT_FROMAGE_BY_NAME,
+    CHECK_IF_EXIST
 )
 from web_scrapping import FromageWEB
+from config import FROMAGE_URL
 
 # pylint: disable=redefined-outer-name
 
@@ -143,7 +146,7 @@ def test_update_data(fromage_instance):
     updated_result = cursor.fetchone()
     assert updated_result[1:4] == new_values
     fromage_instance.close_connection()
-
+    
 def teardown_module():
     """Cette fonction supprime la BDD de test"""
     if os.path.isfile('test_fromage.db'):

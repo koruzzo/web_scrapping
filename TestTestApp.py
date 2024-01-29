@@ -40,9 +40,19 @@ class TestTestApp:
         widget_texte.config(state=tk.DISABLED)
 
     def mise_a_jour_base_de_donnees(self):
-        """..."""
-        messagebox.showinfo("Mise à Jour de la Base de Données",
-                            "Base de Données Mise à Jour avec Succès !")
+        """Met à jour la base de données à partir de l'URL."""
+        fromage_instance = FromageWEB('fromage.db')
+        try:
+            updated = fromage_instance.update_from_url()
+            if updated:
+                messagebox.showinfo("Données mises à jour", "Les données ont été mises à jour avec succès!")
+            else:
+                messagebox.showinfo("Rien à mettre à jour", "Aucune donnée à mettre à jour.")
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de la base de données : {str(e)}")
+            messagebox.showerror("Erreur", "Erreur lors de la mise à jour de la base de données.")
+        finally:
+            fromage_instance.close_connection()
 
     def afficher_diagramme_camembert(self):
         """Construction et du camembert et de la famille 'autre'"""

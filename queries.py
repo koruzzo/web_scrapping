@@ -12,6 +12,9 @@ CREATE_TABLE_FROMAGE = '''
         date TEXT
     )
 '''
+CHECK_IF_EXIST = '''
+SELECT COUNT(*) FROM table_fromage WHERE fromage = ?
+'''
 
 INSERT_INTO_FROMAGE = '''
     INSERT INTO table_fromage (fromage, famille, pate, date)
@@ -62,5 +65,6 @@ __all__ = [
     'DELETE_DUPLICATES',
     'SELECT_DISTINCT_FROMAGE_COUNT',
     'SELECT_NULL_ROWS',
-    'COUNT_FROMAGE_BY_NAME'
+    'COUNT_FROMAGE_BY_NAME',
+    'CHECK_IF_EXIST'
 ]
