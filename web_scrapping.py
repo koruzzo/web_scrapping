@@ -1,10 +1,17 @@
 """..."""
-from urllib.request import urlopen # pylint: disable=unused-import
-from datetime import datetime # pylint: disable=unused-import
-import sqlite3 # pylint: disable=unused-import
-import pytest # pylint: disable=unused-import
-from bs4 import BeautifulSoup # pylint: disable=unused-import
-import pandas as pd # pylint: disable=unused-import
+from urllib.request import urlopen
+from datetime import datetime
+import sqlite3
+from bs4 import BeautifulSoup
+from queries import (
+    CREATE_TABLE_FROMAGE,
+    INSERT_INTO_FROMAGE,
+    UPDATE_FROMAGE,
+    SELECT_ALL_FROMAGE,
+    SELECT_FAMILY_COUNT,
+    DELETE_DUPLICATES,
+)
+from config import FROMAGE_URL
 
 class FromageWEB:
     """..."""
@@ -16,25 +23,13 @@ class FromageWEB:
     def create_table_fromage(self):
         """..."""
         cursor = self.conn.cursor()
-        cursor.execute(
-        '''
-            CREATE TABLE IF NOT EXISTS table_fromage 
-            (
-                id INTEGER PRIMARY KEY,
-                fromage TEXT,
-                famille TEXT,
-                pate TEXT
-            )
-        '''
-        )
+        cursor.execute(CREATE_TABLE_FROMAGE)
 
     def get_data_with_url(self):
         """..."""
-        data = urlopen(
-            'https://www.laboitedufromager.com/liste-des-fromages-par-ordre-alphabetique/'
-            )
+        data = urlopen(FROMAGE_URL)
         data = data.read()
-        soup = BeautifulSoup(data)
+        soup = BeautifulSoup(data, features="html.parser")
         trs = soup.find_all('tr')
 
         for tr in trs:
@@ -50,34 +45,57 @@ class FromageWEB:
                     fromage = td_list[0].text.strip()
                     famille = td_list[1].text.strip()
                     pate = td_list[2].text.strip()
-                    data_to_insert = (fromage, famille, pate)
+                    date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    data_to_insert = (fromage, famille, pate, date)
                     self.insert_into_data(data_to_insert)
 
     def insert_into_data(self, data):
         """..."""
         cursor = self.conn.cursor()
-        cursor.execute(
-            '''
-                INSERT INTO table_fromage (fromage, famille, pate)
-                VALUES (?, ?, ?)
-            ''',
-            data
-        )
+        cursor.execute(INSERT_INTO_FROMAGE, data)
+        self.conn.commit()
+
+    def update_data(self, fromage_id, new_values):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute(UPDATE_FROMAGE, (*new_values, fromage_id))
         self.conn.commit()
 
     def display_data(self):
         """..."""
         cursor = self.conn.cursor()
-        cursor.execute('SELECT * FROM table_fromage')
+        cursor.execute(SELECT_ALL_FROMAGE)
         data = cursor.fetchall()
         for row in data:
             print(row)
-    
+
+    def display_data_family(self):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute(SELECT_FAMILY_COUNT)
+        data = cursor.fetchall()
+        for row in data:
+            print(row)
+
+    def remove_duplicates(self):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute(DELETE_DUPLICATES)
+        self.conn.commit()
+
     def close_connection(self):
         """..."""
         if self.conn:
             self.conn.close()
 
+    def give_display_data_family(self):
+        """..."""
+        cursor = self.conn.cursor()
+        cursor.execute(SELECT_FAMILY_COUNT)
+        data = cursor.fetchall()
+        return data
+
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()
+fromage_web.remove_duplicates()
 fromage_web.display_data()
