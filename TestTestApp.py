@@ -29,7 +29,7 @@ class TestTestApp:
         self.afficher_popup_resultats(results)
 
     def afficher_popup_resultats(self, results):
-        """..."""
+        """Affichage des résultats de test"""
         fenetre_popup = tk.Toplevel(self.master)
         fenetre_popup.title("Résultats des Tests")
         widget_texte = tk.Text(fenetre_popup, wrap="word", height=20, width=80)
@@ -45,7 +45,7 @@ class TestTestApp:
                             "Base de Données Mise à Jour avec Succès !")
 
     def afficher_diagramme_camembert(self):
-        """..."""
+        """Construction et du camembert et de la famille 'autre'"""
         fromage_instance = FromageWEB('fromage.db')
         data = fromage_instance.give_display_data_family()
         fromage_instance.close_connection()
@@ -73,7 +73,7 @@ class TestTestApp:
         canvas.get_tk_widget().pack()
 
     def executer_tests_et_capture_output(self):
-        """..."""
+        """Capture et renvoie le résultat des tests pytest"""
         results = []
         capture_output = io.StringIO()
         with contextlib.redirect_stdout(capture_output):

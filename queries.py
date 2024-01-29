@@ -1,4 +1,6 @@
-"""..."""
+"""
+Ensemble des requetes SQL utilisées dans le programme
+"""
 
 CREATE_TABLE_FROMAGE = '''
     CREATE TABLE IF NOT EXISTS table_fromage 

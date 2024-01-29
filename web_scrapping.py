@@ -21,12 +21,12 @@ class FromageWEB:
         self.create_table_fromage()
 
     def create_table_fromage(self):
-        """..."""
+        """Cette fonction créer la table via la requete CREATE_TABLE_FROMAGE"""
         cursor = self.conn.cursor()
         cursor.execute(CREATE_TABLE_FROMAGE)
 
     def get_data_with_url(self):
-        """..."""
+        """Cette fonction récupère et filtre les données voulues sur le site"""
         data = urlopen(FROMAGE_URL)
         data = data.read()
         soup = BeautifulSoup(data, features="html.parser")
@@ -50,19 +50,19 @@ class FromageWEB:
                     self.insert_into_data(data_to_insert)
 
     def insert_into_data(self, data):
-        """..."""
+        """Cette fonction insert des données dans la table"""
         cursor = self.conn.cursor()
         cursor.execute(INSERT_INTO_FROMAGE, data)
         self.conn.commit()
 
     def update_data(self, fromage_id, new_values):
-        """..."""
+        """Cette fonction met à jour la table avec de nouvelles valeurs"""
         cursor = self.conn.cursor()
         cursor.execute(UPDATE_FROMAGE, (*new_values, fromage_id))
         self.conn.commit()
 
     def display_data(self):
-        """..."""
+        """Cette fonction affiche les données de la table"""
         cursor = self.conn.cursor()
         cursor.execute(SELECT_ALL_FROMAGE)
         data = cursor.fetchall()
@@ -70,7 +70,10 @@ class FromageWEB:
             print(row)
 
     def display_data_family(self):
-        """..."""
+        """
+            Cette fonction affiche les données de la table en les catégorisant par famille
+            à l'aide de la requete SQL SELECT_FAMILY_COUNT
+        """
         cursor = self.conn.cursor()
         cursor.execute(SELECT_FAMILY_COUNT)
         data = cursor.fetchall()
@@ -78,7 +81,7 @@ class FromageWEB:
             print(row)
 
     def remove_duplicates(self):
-        """..."""
+        """Cette fonction supprime les duplicats"""
         cursor = self.conn.cursor()
         cursor.execute(DELETE_DUPLICATES)
         self.conn.commit()
@@ -89,7 +92,7 @@ class FromageWEB:
             self.conn.close()
 
     def give_display_data_family(self):
-        """..."""
+        """Cette fonction récupère et retourne les valeurs de la requete SQL SELECT_FAMILY_COUNT"""
         cursor = self.conn.cursor()
         cursor.execute(SELECT_FAMILY_COUNT)
         data = cursor.fetchall()

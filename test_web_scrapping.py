@@ -92,7 +92,7 @@ def test_display_data(fromage_instance, capsys):
     fromage_instance.close_connection()
 
 def test_remove_duplicates(fromage_instance):
-    """Cette fonction teste la suppression des doublons."""
+    """Cette fonction teste la suppression des doublons"""
     date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data_to_insert_1 = ('Fromage1', 'Famille1', 'Pate1', date_now)
     data_to_insert_2 = ('Fromage1', 'Famille1', 'Pate1', date_now)
