@@ -223,8 +223,19 @@ class FromageWEB:
             description = description_div.text.strip() if description_div else None
 
             #Condition d'existance de la notation
-            star_rating_div = soup.find('div', {'class': 'star-rating'})
-            star_rating = star_rating_div.get('aria-label') if star_rating_div else None
+            # star_rating_div = soup.find('div', {'class': 'star-rating'})
+            # star_rating = star_rating_div.get('aria-label') if star_rating_div else None
+
+            star_rating_div_1 = soup.find('div',{'class':'product_infos'})
+            if star_rating_div_1 :
+                star_rating_div_2 = soup.find('div', {'class': 'star-rating'})
+                if star_rating_div_2 :
+                    star_rating = star_rating_div_2.get('aria-label')
+                else :
+                    star_rating = None
+            else :
+                star_rating = None
+
 
             #Conditions d'existance du nombre de note
             reviews_tab_li = soup.find('li', {'class': 'reviews_tab'})
