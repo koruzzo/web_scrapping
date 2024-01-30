@@ -9,7 +9,13 @@ CREATE_TABLE_FROMAGE = '''
         fromage TEXT,
         famille TEXT,
         pate TEXT,
-        date TEXT
+        date TEXT,
+        lien TEXT,
+        image_url TEXT,
+        prix TEXT,
+        description TEXT,
+        note TEXT,
+        nb_commentaires TEXT
     )
 '''
 CHECK_IF_EXIST = '''
@@ -17,8 +23,8 @@ SELECT COUNT(*) FROM table_fromage WHERE fromage = ?
 '''
 
 INSERT_INTO_FROMAGE = '''
-    INSERT INTO table_fromage (fromage, famille, pate, date)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO table_fromage (fromage, famille, pate, date, lien)
+    VALUES (?, ?, ?, ?, ?)
 '''
 
 UPDATE_FROMAGE = '''
@@ -43,6 +49,11 @@ DELETE_DUPLICATES = '''
         GROUP BY fromage
     )
 '''
+UPDATE_QUERIES = '''
+    UPDATE table_fromage
+        SET image_url=?, prix=?, description=?, note=?, nb_commentaires=?
+        WHERE fromage=? AND lien=?
+'''
 
 SELECT_DISTINCT_FROMAGE_COUNT = 'SELECT COUNT(DISTINCT fromage) FROM table_fromage'
 
@@ -52,6 +63,11 @@ SELECT_NULL_ROWS = '''
         famille IS NULL OR 
         pate IS NULL OR 
         date IS NULL
+'''
+
+SELECT_LINKS_URL = '''
+    SELECT fromage, lien FROM table_fromage 
+    WHERE lien IS NOT NULL
 '''
 
 COUNT_FROMAGE_BY_NAME = 'SELECT COUNT(*) FROM table_fromage WHERE fromage = ?'
@@ -66,5 +82,7 @@ __all__ = [
     'SELECT_DISTINCT_FROMAGE_COUNT',
     'SELECT_NULL_ROWS',
     'COUNT_FROMAGE_BY_NAME',
-    'CHECK_IF_EXIST'
+    'CHECK_IF_EXIST',
+    'SELECT_LINKS_URL',
+    'UPDATE_QUERIES'
 ]
