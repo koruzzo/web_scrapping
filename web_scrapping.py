@@ -156,7 +156,8 @@ class FromageWEB:
             else:
                 image_url = None
                 image_save = None
-            price = soup.find('bdi').text.strip() if soup.find('bdi') else None
+            price__span = soup.find('span',{'class':'woocommerce-Price-amount'})
+            price = price__span.get('bdi').text.strip() if soup.find('bdi') else None
             description_div = soup.find('div',
                                         {'class': 'woocommerce-product-details__short-description'})
             description = description_div.text.strip() if description_div else None
