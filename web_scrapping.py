@@ -90,6 +90,7 @@ class FromageWEB:
         for _, row in df.iterrows():
             self.insert_into_data(tuple(row))
 
+    #--VERSION SIMPLE INSERTION--
     def update_data_new_url(self):
         """
         Sommaire :
@@ -102,15 +103,16 @@ class FromageWEB:
         cursor.execute(SELECT_LINKS_URL)
         rows = cursor.fetchall()
         updated = False
+        data_to_insert = []  # Liste pour stocker toutes les données à insérer
+
         for row in rows:
             fromage = row[0]
             links = row[1].split(',') if row[1] else []
             for link in links:
                 print(f"Updating data for {fromage} with link {link}")
                 additional_data = self.get_additional_data(fromage, link)
-                #Mise a jour de la BDD
                 if additional_data:
-                    cursor.execute(UPDATE_QUERIES, (
+                    data_to_insert.append((
                         additional_data['image_url'],
                         additional_data['image_save'],
                         additional_data['prix'],
@@ -121,12 +123,56 @@ class FromageWEB:
                         link
                     ))
                     print("..DONE..")
-                updated = True
-        self.conn.commit()
+                    updated = True
+
+        if data_to_insert:
+            cursor.executemany(UPDATE_QUERIES, data_to_insert)
+            self.conn.commit()
+
         end_time = time.time()
         elapsed_time = end_time - start_time
         print(f"Update URL took {elapsed_time} seconds.")
         return updated
+
+
+    #--VERSION MULTI INSERTION--
+    # def update_data_new_url(self):
+    #     """
+    #     Sommaire :
+    #         Met à jour les données provenant des URLs des fromages.
+    #         Cette fonction récupère les données supplémentaires à partir des URLs
+    #         stockées dans la base de données et les met à jour dans la base de données.
+    #     """
+    #     start_time = time.time()
+    #     cursor = self.conn.cursor()
+    #     cursor.execute(SELECT_LINKS_URL)
+    #     rows = cursor.fetchall()
+    #     updated = False
+    #     for row in rows:
+    #         fromage = row[0]
+    #         links = row[1].split(',') if row[1] else []
+    #         for link in links:
+    #             print(f"Updating data for {fromage} with link {link}")
+    #             additional_data = self.get_additional_data(fromage, link)
+    #             #Mise a jour de la BDD
+    #             if additional_data:
+    #                 cursor.execute(UPDATE_QUERIES, (
+    #                     additional_data['image_url'],
+    #                     additional_data['image_save'],
+    #                     additional_data['prix'],
+    #                     additional_data['description'],
+    #                     additional_data['note'],
+    #                     additional_data['nb_commentaires'],
+    #                     fromage,
+    #                     link
+    #                 ))
+    #                 print("..DONE..")
+    #             updated = True
+    #     self.conn.commit()
+    #     end_time = time.time()
+    #     elapsed_time = end_time - start_time
+    #     print(f"Update URL took {elapsed_time} seconds.")
+    #     return updated
 
     def get_additional_data(self, fromage_name, link):
         """

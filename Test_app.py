@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 from web_scrapping import FromageWEB
 
-class TestTestApp:
+class Test_app:
     """..."""
     def __init__(self, master):
         self.master = master
@@ -97,6 +97,6 @@ class TestTestApp:
 
 if __name__ == "__main__":
     racine = tk.Tk()
-    application = TestTestApp(racine)
+    application = Test_app(racine)
     racine.protocol("WM_DELETE_WINDOW", application.quitter_application)
     racine.mainloop()
