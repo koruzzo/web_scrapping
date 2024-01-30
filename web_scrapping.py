@@ -2,7 +2,11 @@
 from urllib.request import urlopen
 from datetime import datetime
 import sqlite3
+import time
+import os
+import io
 import requests
+from PIL import Image
 import pandas as pd
 from bs4 import BeautifulSoup
 from queries import (
@@ -77,6 +81,13 @@ class FromageWEB:
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, features="html.parser")
             image_url = soup.find('img', {'class': 'wp-post-image'})['src'] if soup.find('img', {'class': 'wp-post-image'}) else None
+            image_element = soup.find('img', {'class': 'wp-post-image'})
+            if image_element:
+                image_url = image_element['src']
+                image_pil = self.download_and_save_image(image_url, fromage_name, link)
+            else:
+                image_url = None
+                image_pil = None
             price = soup.find('bdi').text.strip() if soup.find('bdi') else None
             description_div = soup.find('div',
                                         {'class': 'woocommerce-product-details__short-description'})
@@ -87,6 +98,7 @@ class FromageWEB:
             reviews_text = reviews_tab_li.find('a').text.strip() if reviews_tab_li else None
             return {
                 'image_url': image_url,
+                'image_pil': image_pil,
                 'prix': price,
                 'description': description,
                 'note': star_rating,
@@ -98,6 +110,7 @@ class FromageWEB:
 
     def update_url(self):
         """..."""
+        start_time = time.time()
         cursor = self.conn.cursor()
         cursor.execute(SELECT_LINKS_URL)
         rows = cursor.fetchall()
@@ -112,6 +125,7 @@ class FromageWEB:
                 if additional_data:
                     cursor.execute(UPDATE_QUERIES, (
                         additional_data['image_url'],
+                        additional_data['image_pil'],
                         additional_data['prix'],
                         additional_data['description'],
                         additional_data['note'],
@@ -122,7 +136,31 @@ class FromageWEB:
                     print("..DONE..")
                 updated = True
         self.conn.commit()
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"Update URL took {elapsed_time} seconds.")
         return updated
+
+    def download_and_save_image(self, image_url, fromage_name, link):
+        """..."""
+        try:
+            response = requests.get(image_url, timeout=5)
+        except requests.exceptions.RequestException as e:
+            print(f"Error downloading image for {fromage_name}: {e}")
+            return None
+        if response.status_code == 200:
+            image_data = response.content
+            image_filename = f"{fromage_name}_{link.split('/')[-2]}.jpg"
+            image_path = os.path.join("images", image_filename)
+            with open(image_path, 'wb') as image_file:
+                image_file.write(image_data)
+            print(f"Image downloaded: {image_path}")
+            image_data_bytes = io.BytesIO(image_data).read()
+            return image_data_bytes
+        else:
+            print(f"Failed to download image for {fromage_name}")
+            return None
+
 
     def insert_into_data(self, data):
         """Cette fonction insert des données dans la table"""

@@ -12,6 +12,7 @@ CREATE_TABLE_FROMAGE = '''
         date TEXT,
         lien TEXT,
         image_url TEXT,
+        image_pil BLOB,
         prix TEXT,
         description TEXT,
         note TEXT,
@@ -51,7 +52,7 @@ DELETE_DUPLICATES = '''
 '''
 UPDATE_QUERIES = '''
     UPDATE table_fromage
-        SET image_url=?, prix=?, description=?, note=?, nb_commentaires=?
+        SET image_url=?, image_pil=?, prix=?, description=?, note=?, nb_commentaires=?
         WHERE fromage=? AND lien=?
 '''
 
