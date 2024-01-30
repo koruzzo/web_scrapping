@@ -1,5 +1,5 @@
 """
-Ensemble des requetes SQL utilisées dans le programme
+    Ensemble des requetes SQL utilisées dans le programme
 """
 
 CREATE_TABLE_FROMAGE = '''

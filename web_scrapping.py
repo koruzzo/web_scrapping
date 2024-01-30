@@ -21,8 +21,7 @@ from queries import (
 from config import FROMAGE_URL
 
 class FromageWEB:
-    """_summary_
-    """
+    """..."""
     def __init__(self, bdd_path = 'fromage.db'):
         """
         Sommaire :
@@ -60,6 +59,7 @@ class FromageWEB:
             td_list = tr.find_all('td')
             if len(td_list) == 3:
                 if (
+                    #Filtre classique
                     td_list[0].text.strip() != ""
                     and "Famille" not in td_list[0].text
                     and "Fromage" not in td_list[0].text
@@ -71,6 +71,7 @@ class FromageWEB:
                     pate = td_list[2].text.strip()
                     date = pd.Timestamp.now()
 
+                    #Conditions d'existance de l'url
                     lien = [a['href'].rsplit('/', 2)[-2]
                              for a in soup.find_all('a') if fromage in a.text]
                     lien = [str(url) for url in lien]
@@ -89,7 +90,7 @@ class FromageWEB:
         for _, row in df.iterrows():
             self.insert_into_data(tuple(row))
 
-    def update_url(self):
+    def update_data_new_url(self):
         """
         Sommaire :
             Met à jour les données provenant des URLs des fromages.
@@ -107,7 +108,7 @@ class FromageWEB:
             for link in links:
                 print(f"Updating data for {fromage} with link {link}")
                 additional_data = self.get_additional_data(fromage, link)
-
+                #Mise a jour de la BDD
                 if additional_data:
                     cursor.execute(UPDATE_QUERIES, (
                         additional_data['image_url'],
@@ -148,6 +149,8 @@ class FromageWEB:
             return None
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, features="html.parser")
+
+            #Conditions d'existance de l'url
             image_url = soup.find('img', {'class': 'wp-post-image'})['src'] if soup.find('img', {'class': 'wp-post-image'}) else None
             image_element = soup.find('img', {'class': 'wp-post-image'})
             if image_element:
@@ -156,15 +159,31 @@ class FromageWEB:
             else:
                 image_url = None
                 image_save = None
-            price__span = soup.find('span',{'class':'woocommerce-Price-amount'})
-            price = price__span.get('bdi').text.strip() if soup.find('bdi') else None
+
+            #Conditions d'existance du prix
+            price_span = soup.find('div',{'class':'product_infos'})
+            if price_span:
+                price_bdi = price_span.find('p',{'class':'price'})
+                if price_bdi:
+                    price = price_bdi.text.strip()
+                else:
+                    price = None
+            else:
+                price = None
+
+            #Conditions d'existance de la description
             description_div = soup.find('div',
                                         {'class': 'woocommerce-product-details__short-description'})
             description = description_div.text.strip() if description_div else None
+
+            #Condition d'existance de la notation
             star_rating_div = soup.find('div', {'class': 'star-rating'})
             star_rating = star_rating_div.get('aria-label') if star_rating_div else None
+
+            #Conditions d'existance du nombre de note
             reviews_tab_li = soup.find('li', {'class': 'reviews_tab'})
             reviews_text = reviews_tab_li.find('a').text.strip() if reviews_tab_li else None
+
             return {
                 'image_url': image_url,
                 'image_save': image_save,
@@ -190,6 +209,15 @@ class FromageWEB:
         Retourne : 
             Les données de l'image sous forme d'octets.
         """
+        image_filename = f"{fromage_name}_{link.split('/')[-2]}.jpg"
+        image_path = os.path.join("images", image_filename)
+
+        #On vérifie que l'image n'existe pas déjàs dans le fichier images
+        if os.path.exists(image_path):
+            print(f"Image already exists: {image_path}")
+            with open(image_path, 'rb') as image_file:
+                image_data_bytes = io.BytesIO(image_file.read()).read()
+            return image_data_bytes
         try:
             response = requests.get(image_url, timeout=5)
         except requests.exceptions.RequestException as e:
@@ -197,8 +225,6 @@ class FromageWEB:
             return None
         if response.status_code == 200:
             image_data = response.content
-            image_filename = f"{fromage_name}_{link.split('/')[-2]}.jpg"
-            image_path = os.path.join("images", image_filename)
             with open(image_path, 'wb') as image_file:
                 image_file.write(image_data)
             print(f"Image downloaded: {image_path}")
@@ -303,4 +329,4 @@ class FromageWEB:
 fromage_web = FromageWEB()
 fromage_web.get_data_with_url()
 fromage_web.remove_duplicates()
-fromage_web.update_url()
+fromage_web.update_data_new_url()
