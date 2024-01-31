@@ -4,6 +4,7 @@ import sqlite3
 import time
 import os
 import io
+from slugify import slugify
 import requests
 import pandas as pd
 from bs4 import BeautifulSoup
@@ -71,7 +72,7 @@ class FromageWEB:
                     pate = td_list[2].text.strip()
                     date = pd.Timestamp.now()
 
-                    #Conditions d'existance de l'url
+                    #Conditions de l'url
                     lien = [a['href'].rsplit('/', 2)[-2]
                              for a in soup.find_all('a') if fromage in a.text]
                     lien = [str(url) for url in lien]
@@ -228,7 +229,7 @@ class FromageWEB:
 
             star_rating_div_1 = soup.find('div',{'class':'product_infos'})
             if star_rating_div_1 :
-                star_rating_div_2 = soup.find('div', {'class': 'star-rating'})
+                star_rating_div_2 = star_rating_div_1.find('div', {'class': 'star-rating'})
                 if star_rating_div_2 :
                     star_rating = star_rating_div_2.get('aria-label')
                 else :
@@ -266,7 +267,9 @@ class FromageWEB:
         Retourne : 
             Les données de l'image sous forme d'octets.
         """
-        image_filename = f"{fromage_name}_{link.split('/')[-2]}.jpg"
+       
+        cleaned_fromage_name = slugify(fromage_name)
+        image_filename = f"{cleaned_fromage_name}_{link.split('/')[-2]}.jpg"
         image_path = os.path.join("images", image_filename)
 
         #On vérifie que l'image n'existe pas déjàs dans le fichier images
